@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlaDino - Assistant KenzBladi</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 420px;
+      height: 620px;
+      background: #16213e;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #c8873a, #e6a44a);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .header-info h2 {
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .header-info p {
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: #334; border-radius: 4px; }
+
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .message.bot {
+      background: #0f3460;
+      color: #e2e8f0;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, #c8873a, #e6a44a);
+      color: white;
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+    }
+
+    .typing {
+      display: flex;
+      gap: 4px;
+      padding: 12px 14px;
+      background: #0f3460;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      width: fit-content;
+    }
+
+    .typing span {
+      width: 8px;
+      height: 8px;
+      background: #c8873a;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .input-area {
+      padding: 16px;
+      background: #0d1b2a;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-area input {
+      flex: 1;
+      background: #1e2d40;
+      border: 1px solid #2d4060;
+      border-radius: 24px;
+      padding: 10px 16px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .input-area input:focus {
+      border-color: #c8873a;
+    }
+
+    .input-area input::placeholder { color: #64748b; }
+
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #c8873a, #e6a44a);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .send-btn:hover { transform: scale(1.08); }
+
+    .send-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="avatar">🦙</div>
+      <div class="header-info">
+        <h2>BlaDino</h2>
+        <p><span class="status-dot"></span>Assistant KenzBladi • En ligne</p>
+      </div>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="message bot">
+        Bonjour ! Je suis <strong>BlaDino</strong>, l'assistant de KenzBladi 🛍️<br>
+        Comment puis-je vous aider aujourd'hui ?
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Posez votre question..." />
+      <button class="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('userInput');
+    const messagesDiv = document.getElementById('messages');
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    function addMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = `message ${type}`;
+      div.innerHTML = text;
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return div;
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'typing';
+      div.id = 'typing';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function hideTyping() {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+    }
+
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'user');
+      input.value = '';
+      showTyping();
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: text })
+        });
+
+        const data = await res.json();
+        hideTyping();
+       addMessage(data.reponse || data.answer || JSON.stringify(data), 'bot');
+      } catch (err) {
+        hideTyping();
+        addMessage('❌ Erreur de connexion au serveur.', 'bot');
+      }
+    }
+  </script>
+</body>
+</html>
